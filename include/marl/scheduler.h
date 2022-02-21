@@ -232,7 +232,7 @@ class Scheduler {
       Yielded,
 
       // Waiting: the Fiber is currently blocked on a wait() call with a
-      // timeout. The fiber is stilling in the Worker::Work::waiting queue.
+      // timeout. The fiber is sitting in the Worker::Work::waiting queue.
       Waiting,
 
       // Queued: the Fiber is currently queued for execution in the
@@ -285,7 +285,7 @@ class Scheduler {
   struct WaitingFibers {
     inline WaitingFibers(Allocator*);
 
-    // operator bool() returns true iff there are any wait fibers.
+    // operator bool() returns true iff there are any waiting fibers.
     inline operator bool() const;
 
     // take() returns the next fiber that has exceeded its timeout, or nullptr

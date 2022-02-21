@@ -95,7 +95,7 @@ void Scheduler::bind() {
 #if !MEMORY_SANITIZER_ENABLED
   // thread_local variables in shared libraries are initialized at load-time,
   // but this is not observed by MemorySanitizer if the loader itself was not
-  // instrumented, leading to false-positive unitialized variable errors.
+  // instrumented, leading to false-positive uninitialized variable errors.
   // See https://github.com/google/marl/issues/184
   MARL_ASSERT(bound == nullptr, "Scheduler already bound");
 #endif
@@ -235,7 +235,7 @@ Scheduler::Fiber::Fiber(Allocator::unique_ptr<OSFiber>&& impl, uint32_t id)
 }
 
 // TODO(chromium:1211047): Testing the static thread_local Worker::current for
-// null causes a MemorySantizer false positive.
+// null causes a MemorySanitizer false positive.
 CLANG_NO_SANITIZE_MEMORY
 Scheduler::Fiber* Scheduler::Fiber::current() {
   auto worker = Worker::getCurrent();
@@ -450,7 +450,7 @@ bool Scheduler::Worker::wait(lock& waitLock,
     // suspend the fiber.
     suspend(timeout);
 
-    // Fiber resumed. We don't need the work mutex locked any more.
+    // Fiber resumed. We don't need the work mutex locked anymore.
     work.mutex.unlock();
 
     // Re-lock to either return due to timeout, or call pred().
@@ -628,7 +628,7 @@ void Scheduler::Worker::enqueueFiberTimeouts() {
 void Scheduler::Worker::changeFiberState(Fiber* fiber,
                                          Fiber::State from,
                                          Fiber::State to) const {
-  (void)from;  // Unusued parameter when ENABLE_DEBUG_LOGGING is disabled.
+  (void)from;  // Unused parameter when ENABLE_DEBUG_LOGGING is disabled.
   DBG_LOG("%d: CHANGE_FIBER_STATE(%d %s -> %s)", (int)id, (int)fiber->id,
           Fiber::toString(from), Fiber::toString(to));
   ASSERT_FIBER_STATE(fiber, from);
@@ -707,7 +707,7 @@ void Scheduler::Worker::runUntilIdle() {
       task();
 
       // std::function<> can carry arguments with complex destructors.
-      // Ensure these are destructed outside of the lock.
+      // Ensure these are destructed outside the lock.
       task = Task();
 
       work.mutex.lock();

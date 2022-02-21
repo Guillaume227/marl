@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Example of a task that creates and waits on sub tasks.
+// Example of a task that creates and waits on sub-tasks.
 
 #include "marl/defer.h"
 #include "marl/scheduler.h"

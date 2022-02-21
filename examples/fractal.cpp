@@ -118,7 +118,7 @@ bool writeBMP(const Color<uint8_t>* texels,
   put4(0);       // size
   put4(72);      // horizontal resolution
   put4(72);      // vertical resolution
-  put4(0);       // color pallete size
+  put4(0);       // color palette size
   put4(0);       // 'important colors' count
 
   for (int y = height - 1; y >= 0; y--) {
