@@ -45,7 +45,8 @@ class Scheduler {
   class Worker;
 
  public:
-  using TimePoint = std::chrono::system_clock::time_point;
+  using ClockT = std::chrono::system_clock;
+  using TimePoint = ClockT::time_point;
   using Predicate = std::function<bool()>;
   using ThreadInitializer = std::function<void(int workerId)>;
 
@@ -208,6 +209,11 @@ class Scheduler {
     template <typename Clock, typename Duration>
     MARL_NO_EXPORT inline bool wait(
         const std::chrono::time_point<Clock, Duration>& timeout);
+
+    template <typename Duration>
+    MARL_NO_EXPORT inline bool wait(Duration const& timeout) {
+      return wait(ClockT::now() + timeout);
+    }
 
     // notify() reschedules the suspended Fiber for execution.
     // notify() is usually only called when the predicate for one or more wait()
@@ -459,7 +465,7 @@ class Scheduler {
       }
 
      private:
-      uint64_t x = std::chrono::system_clock::now().time_since_epoch().count();
+      uint64_t x = ClockT::now().time_since_epoch().count();
     };
 
     // The current worker bound to the current thread.

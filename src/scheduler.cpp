@@ -429,7 +429,7 @@ bool Scheduler::Worker::wait(const TimePoint* timeout) {
     marl::lock lock(work.mutex);
     suspend(timeout);
   }
-  return timeout == nullptr || std::chrono::system_clock::now() < *timeout;
+  return timeout == nullptr || ClockT::now() < *timeout;
 }
 
 bool Scheduler::Worker::wait(lock& waitLock,
@@ -457,7 +457,7 @@ bool Scheduler::Worker::wait(lock& waitLock,
     waitLock.lock_no_tsa();
 
     // Check timeout.
-    if (timeout != nullptr && std::chrono::system_clock::now() >= *timeout) {
+    if (timeout != nullptr && ClockT::now() >= *timeout) {
       return false;
     }
 
@@ -467,7 +467,7 @@ bool Scheduler::Worker::wait(lock& waitLock,
 }
 
 void Scheduler::Worker::suspend(
-    const std::chrono::system_clock::time_point* timeout) {
+    const Scheduler::TimePoint* timeout) {
   // Current fiber is yielding as it is blocked.
   if (timeout != nullptr) {
     changeFiberState(currentFiber, Fiber::State::Running,
@@ -616,7 +616,7 @@ void Scheduler::Worker::waitForWork() {
 }
 
 void Scheduler::Worker::enqueueFiberTimeouts() {
-  auto now = std::chrono::system_clock::now();
+  auto now = ClockT::now();
   while (auto fiber = work.waiting.take(now)) {
     changeFiberState(fiber, Fiber::State::Waiting, Fiber::State::Queued);
     DBG_LOG("%d: TIMEOUT(%d)", (int)id, (int)fiber->id);
