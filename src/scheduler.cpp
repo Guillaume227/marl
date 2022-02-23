@@ -129,6 +129,12 @@ void Scheduler::unbind() {
   bound = nullptr;
 }
 
+void Scheduler::clear_tasks() {
+  MARL_ASSERT(bound != nullptr, "No scheduler bound");
+  auto worker = Worker::getCurrent();
+  worker->clear_tasks();
+}
+
 Scheduler::Scheduler(const Config& config)
     : cfg(setConfigDefaults(config)),
       workerThreads{},
@@ -543,6 +549,15 @@ void Scheduler::Worker::enqueue(Task&& task) {
   work.mutex.lock();
   enqueueAndUnlock(std::move(task));
 }
+
+void Scheduler::Worker::clear_tasks() {
+  work.mutex.lock();
+  work.num = 0;
+  work.numBlockedFibers = 0;
+  work.tasks.clear();
+  work.mutex.unlock();
+}
+
 
 void Scheduler::Worker::enqueueAndUnlock(Task&& task) {
   auto notify = work.notifyAdded;

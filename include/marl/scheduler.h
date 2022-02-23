@@ -31,6 +31,8 @@
 #include <functional>
 #include <thread>
 
+#include "sim_clock.h"
+
 namespace marl {
 
 class OSFiber;
@@ -45,7 +47,7 @@ class Scheduler {
   class Worker;
 
  public:
-  using ClockT = std::chrono::system_clock;
+  using ClockT = aura::sim_clock;
   using TimePoint = ClockT::time_point;
   using Predicate = std::function<bool()>;
   using ThreadInitializer = std::function<void(int workerId)>;
@@ -120,6 +122,10 @@ class Scheduler {
   // enqueue() queues the task for asynchronous execution.
   MARL_EXPORT
   void enqueue(Task&& task);
+
+  // clear_tasks discards all running tasks
+  MARL_EXPORT
+  void clear_tasks();
 
   // config() returns the Config that was used to build the scheduler.
   MARL_EXPORT
@@ -348,6 +354,8 @@ class Scheduler {
     // stop() ceases execution of the worker, blocking until all pending
     // tasks have fully finished.
     void stop() EXCLUDES(work.mutex);
+
+    void clear_tasks() EXCLUDES(work.mutex);
 
     // wait() suspends execution of the current task until the predicate pred
     // returns true or the optional timeout is reached.
