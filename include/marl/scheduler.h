@@ -228,6 +228,7 @@ class Scheduler {
     void notify();
 
     // id is the thread-unique identifier of the Fiber.
+    // by default, ids are sequential and reflect the order of creation.
     uint32_t const id;
 
    private:

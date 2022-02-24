@@ -358,7 +358,7 @@ bool Scheduler::WaitingFibers::Timeout::operator<(const Timeout& o) const {
   if (timepoint != o.timepoint) {
     return timepoint < o.timepoint;
   }
-  return fiber < o.fiber;
+  return fiber->id < o.fiber->id;
 }
 
 ////////////////////////////////////////////////////////////////////////////////
