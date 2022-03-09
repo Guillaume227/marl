@@ -135,6 +135,20 @@ void Scheduler::clear_tasks() {
   worker->clear_tasks();
 }
 
+Scheduler::TimePoint const* Scheduler::next_timeout() const {
+  auto worker = Worker::getCurrent();
+  return worker->next_timeout();
+}
+
+Scheduler::TimePoint const* Scheduler::Worker::next_timeout() const {
+  if(work.num == 0 and work.waiting) {
+    // do not move to next timeout task as long
+    // as there are pending (started or not) tasks.
+    return &this->work.waiting.next();
+  }
+  return nullptr;
+}
+
 Scheduler::Scheduler(const Config& config)
     : cfg(setConfigDefaults(config)),
       workerThreads{},
@@ -326,7 +340,7 @@ Scheduler::Fiber* Scheduler::WaitingFibers::take(const TimePoint& timeout) {
   return fiber;
 }
 
-Scheduler::TimePoint Scheduler::WaitingFibers::next() const {
+Scheduler::TimePoint const& Scheduler::WaitingFibers::next() const {
   MARL_ASSERT(*this,
               "WaitingFibers::next() called when there' no waiting fibers");
   return timeouts.begin()->timepoint;
@@ -557,7 +571,6 @@ void Scheduler::Worker::clear_tasks() {
   work.tasks.clear();
   work.mutex.unlock();
 }
-
 
 void Scheduler::Worker::enqueueAndUnlock(Task&& task) {
   auto notify = work.notifyAdded;

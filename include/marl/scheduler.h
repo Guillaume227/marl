@@ -131,6 +131,10 @@ class Scheduler {
   MARL_EXPORT
   const Config& config() const;
 
+  // next() returns the timepoint of the next fiber to timeout.
+  MARL_EXPORT
+  TimePoint const* next_timeout() const;
+
   // Fibers expose methods to perform cooperative multitasking and are
   // automatically created by the Scheduler.
   //
@@ -307,7 +311,7 @@ class Scheduler {
 
     // next() returns the timepoint of the next fiber to timeout.
     // next() can only be called if operator bool() returns true.
-    inline TimePoint next() const;
+    inline TimePoint const& next() const;
 
     // add() adds another fiber and timeout to the list of waiting fibers.
     inline void add(const TimePoint& timeout, Fiber* fiber);
@@ -357,6 +361,8 @@ class Scheduler {
     void stop() EXCLUDES(work.mutex);
 
     void clear_tasks() EXCLUDES(work.mutex);
+
+    TimePoint const* next_timeout() const REQUIRES(work.mutex);
 
     // wait() suspends execution of the current task until the predicate pred
     // returns true or the optional timeout is reached.
