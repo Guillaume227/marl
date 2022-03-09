@@ -45,9 +45,22 @@ namespace aura {
       return std::chrono::duration_cast<Duration>(_time_now.time_since_epoch());
     }
 
+    template<typename Duration = duration>
+    time_point time_since_start(Duration time) const noexcept {
+      return time_point{} + time;
+    }
+
+    duration time_since_start(time_point const& timePoint) const noexcept {
+      return std::chrono::duration_cast<duration>(timePoint.time_since_epoch());
+    }
+
     template<typename Duration>
     time_point advance_time(Duration const& d) noexcept {
       return _time_now += d;
+    }
+
+    time_point set_time(time_point timePoint) noexcept {
+      return _time_now = timePoint;
     }
 
     void reset() {
