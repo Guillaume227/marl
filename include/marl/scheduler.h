@@ -37,6 +37,14 @@ namespace marl {
 
 class OSFiber;
 
+class ReplayController {
+ public:
+  using TimePoint = std::chrono::system_clock::time_point;
+  [[nodiscard]]
+  virtual TimePoint time_now() const = 0;
+  virtual bool replay_step(TimePoint replay_up_to) = 0;
+};
+
 // Scheduler asynchronously processes Tasks.
 // A scheduler can be bound to one or more threads using the bind() method.
 // Once bound to a thread, that thread can call marl::schedule() to enqueue
@@ -47,7 +55,7 @@ class Scheduler {
   class Worker;
 
  public:
-  using ClockT = aura::sim_clock;
+  using ClockT = std::chrono::system_clock;
   using TimePoint = ClockT::time_point;
   using Predicate = std::function<bool()>;
   using ThreadInitializer = std::function<void(int workerId)>;
@@ -78,7 +86,7 @@ class Scheduler {
     // Size of each fiber stack. This may be rounded up to the nearest
     // allocation granularity for the given platform.
     size_t fiberStackSize = DefaultFiberStackSize;
-
+    ReplayController* replayController = nullptr;
     // allCores() returns a Config with a worker thread for each of the logical
     // cpus available to the process.
     MARL_EXPORT
@@ -92,6 +100,7 @@ class Scheduler {
         const ThreadInitializer&);
     MARL_NO_EXPORT inline Config& setWorkerThreadAffinityPolicy(
         const std::shared_ptr<Thread::Affinity::Policy>&);
+    MARL_NO_EXPORT inline Config& setReplayController(ReplayController*);
   };
 
   // Constructor.
@@ -134,6 +143,8 @@ class Scheduler {
   // next() returns the timepoint of the next fiber to timeout.
   MARL_EXPORT
   TimePoint const* next_timeout() const;
+
+  TimePoint time_now() const;
 
   // Fibers expose methods to perform cooperative multitasking and are
   // automatically created by the Scheduler.
@@ -222,7 +233,7 @@ class Scheduler {
 
     template <typename Duration>
     MARL_NO_EXPORT inline bool wait(Duration const& timeout) {
-      return wait(ClockT::now() + timeout);
+      return wait(Scheduler::get()->time_now() + timeout);
     }
 
     // notify() reschedules the suspended Fiber for execution.
@@ -560,6 +571,11 @@ Scheduler::Config& Scheduler::Config::setWorkerThreadInitializer(
 Scheduler::Config& Scheduler::Config::setWorkerThreadAffinityPolicy(
     const std::shared_ptr<Thread::Affinity::Policy>& policy) {
   workerThread.affinityPolicy = policy;
+  return *this;
+}
+
+Scheduler::Config& Scheduler::Config::setReplayController(ReplayController* controller) {
+  replayController = controller;
   return *this;
 }
 

@@ -449,7 +449,7 @@ bool Scheduler::Worker::wait(const TimePoint* timeout) {
     marl::lock lock(work.mutex);
     suspend(timeout);
   }
-  return timeout == nullptr || ClockT::now() < *timeout;
+  return timeout == nullptr || scheduler->time_now() < *timeout;
 }
 
 bool Scheduler::Worker::wait(lock& waitLock,
@@ -477,7 +477,7 @@ bool Scheduler::Worker::wait(lock& waitLock,
     waitLock.lock_no_tsa();
 
     // Check timeout.
-    if (timeout != nullptr && ClockT::now() >= *timeout) {
+    if (timeout != nullptr && scheduler->time_now() >= *timeout) {
       return false;
     }
 
@@ -635,16 +635,41 @@ void Scheduler::Worker::waitForWork() {
     work.mutex.lock();
   }
 
-  work.wait([this]() REQUIRES(work.mutex) {
-    return work.num > 0 || (shutdown && work.numBlockedFibers == 0U);
-  });
+  if (auto& replayController = scheduler->cfg.replayController) {
+    if (work.waiting) {
+      auto* timeout = next_timeout();
+      auto replay_up_to = *timeout;
+      work.mutex.unlock();
+      bool keep_going = replayController->replay_step(replay_up_to);
+      work.mutex.lock();
+      if (not keep_going) {
+        shutdown = true;
+        changeFiberState(mainFiber.get(), mainFiber->state, Fiber::State::Running);
+        switchToFiber(mainFiber.get());
+      }
+    } else {
+      work.mutex.unlock();
+      mainFiber->notify();
+      work.mutex.lock();
+    }
+  } else {
+    work.wait([this]() REQUIRES(work.mutex) {
+      return work.num > 0 || (shutdown && work.numBlockedFibers == 0U);
+    });
+  }
   if (work.waiting) {
     enqueueFiberTimeouts();
   }
 }
 
+Scheduler::TimePoint Scheduler::time_now() const {
+  return cfg.replayController
+             ? cfg.replayController->time_now()
+             : std::chrono::system_clock::now();
+}
+
 void Scheduler::Worker::enqueueFiberTimeouts() {
-  auto now = ClockT::now();
+  auto now = scheduler->time_now();
   while (auto fiber = work.waiting.take(now)) {
     changeFiberState(fiber, Fiber::State::Waiting, Fiber::State::Queued);
     DBG_LOG("%d: TIMEOUT(%d)", (int)id, (int)fiber->id);

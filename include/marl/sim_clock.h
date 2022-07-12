@@ -8,7 +8,7 @@ namespace aura {
     using duration = std::chrono::microseconds;
     using rep = duration::rep;
     using period = duration::period;
-    using time_point = std::chrono::time_point<sim_clock>;
+    using time_point = std::chrono::time_point<std::chrono::system_clock>;
 
     static constexpr bool is_steady = false;
 
@@ -40,14 +40,18 @@ namespace aura {
 
     //////////
 
+    time_point time_now() const noexcept {
+      return _time_now;
+    }
+
     template<typename Duration = duration>
     Duration time_since_start() const noexcept {
       return std::chrono::duration_cast<Duration>(_time_now.time_since_epoch());
     }
 
     template<typename Duration = duration>
-    time_point time_since_start(Duration time) const noexcept {
-      return time_point{} + time;
+    time_point to_time_point(Duration time_since_start) const noexcept {
+      return time_point{} + time_since_start;
     }
 
     duration time_since_start(time_point const& timePoint) const noexcept {
