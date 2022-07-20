@@ -39,6 +39,7 @@ class OSFiber;
 
 class ReplayController {
  public:
+  virtual ~ReplayController() = default;
   using TimePoint = std::chrono::system_clock::time_point;
   [[nodiscard]]
   virtual TimePoint time_now() const = 0;
