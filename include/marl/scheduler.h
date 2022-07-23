@@ -31,8 +31,6 @@
 #include <functional>
 #include <thread>
 
-#include "sim_clock.h"
-
 namespace marl {
 
 class OSFiber;
