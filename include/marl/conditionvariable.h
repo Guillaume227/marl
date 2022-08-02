@@ -151,7 +151,8 @@ bool ConditionVariable::wait_for(
     marl::lock& lock,
     const std::chrono::duration<Rep, Period>& duration,
     Predicate&& pred) {
-  return wait_until(lock, std::chrono::system_clock::now() + duration, pred);
+  auto now = Scheduler::get()->time_now();
+  return wait_until(lock, now + duration, pred);
 }
 
 template <typename Clock, typename Duration, typename Predicate>
