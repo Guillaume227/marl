@@ -36,6 +36,8 @@
 #include "osfiber_asm_mips64.h"
 #elif defined(__riscv) && __riscv_xlen == 64
 #include "osfiber_asm_rv64.h"
+#elif defined(__EMSCRIPTEN__)
+#include "osfiber_emscripten.h"
 #else
 #error "Unsupported target"
 #endif
