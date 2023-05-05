@@ -49,6 +49,8 @@ class Event {
 
   // clear() clears the signaled state.
   MARL_NO_EXPORT inline void clear() const;
+  // reset() clears the waiting fibers.
+  MARL_NO_EXPORT inline void reset();
 
   // wait() blocks until the event is signaled.
   // If the event was constructed with the Auto Mode, then only one
@@ -109,6 +111,7 @@ class Event {
                                  bool initialState);
     MARL_NO_EXPORT inline void signal();
     MARL_NO_EXPORT inline void wait();
+    MARL_NO_EXPORT inline void reset();
 
     template <typename Rep, typename Period>
     MARL_NO_EXPORT inline bool wait_for(
@@ -130,6 +133,11 @@ class Event {
 
 Event::Shared::Shared(Allocator* allocator, Mode mode_, bool initialState)
     : cv(allocator), mode(mode_), signalled(initialState) {}
+
+void Event::Shared::reset() {
+  marl::lock lock(mutex);
+  cv.reset();
+}
 
 void Event::Shared::signal() {
   marl::lock lock(mutex);
@@ -193,6 +201,11 @@ void Event::signal() const {
 void Event::clear() const {
   marl::lock lock(shared->mutex);
   shared->signalled = false;
+}
+
+void Event::reset() {
+  shared->reset();
+  clear();
 }
 
 void Event::wait() const {

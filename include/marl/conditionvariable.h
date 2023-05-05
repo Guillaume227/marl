@@ -45,6 +45,9 @@ class ConditionVariable {
   // threads.
   MARL_NO_EXPORT inline void notify_all();
 
+  // reset() clears the waiting fibers
+  MARL_NO_EXPORT inline void reset();
+
   // wait() blocks the current fiber or thread until the predicate is satisfied
   // and the ConditionVariable is notified.
   template <typename Predicate>
@@ -116,6 +119,15 @@ void ConditionVariable::notify_all() {
   if (numWaitingOnCondition > 0) {
     condition.notify_all();
   }
+}
+
+void ConditionVariable::reset() {
+  mutex.lock();
+  while(waiting.size() > 0) {
+    waiting.erase(waiting.begin());
+  }
+  numWaiting = 0;
+  mutex.unlock();
 }
 
 template <typename Predicate>
